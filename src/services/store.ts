@@ -28,6 +28,9 @@ import {
   INITIAL_NOTIFICATIONS,
   INITIAL_DEFECTS,
   INITIAL_APPROVALS,
+  DEMO_PURCHASE_ORDERS,
+  DEMO_NOTIFICATIONS,
+  DEMO_APPROVALS,
 } from '../data/initialCatalog';
 import {
   calculateGrossProfit,
@@ -37,18 +40,18 @@ import {
 } from '../utils/formatters';
 
 const STORAGE_KEYS = {
-  PRODUCTS: 'vastrika_products_v1',
-  ORDERS: 'vastrika_orders_v1',
-  MOVEMENTS: 'vastrika_movements_v1',
-  SUPPLIERS: 'vastrika_suppliers_v1',
-  PURCHASE_ORDERS: 'vastrika_po_v1',
-  COUPONS: 'vastrika_coupons_v1',
-  CAMPAIGNS: 'vastrika_campaigns_v1',
-  PROCESSED_WEBHOOKS: 'vastrika_processed_webhooks_v1',
-  ACTIVE_RESERVATIONS: 'vastrika_active_reservations_v1',
-  NOTIFICATIONS: 'vastrika_notifications_v1',
-  DEFECTS: 'vastrika_defects_v1',
-  APPROVALS: 'vastrika_approvals_v1',
+  PRODUCTS: 'vastrika_products_v2',
+  ORDERS: 'vastrika_orders_v2',
+  MOVEMENTS: 'vastrika_movements_v2',
+  SUPPLIERS: 'vastrika_suppliers_v2',
+  PURCHASE_ORDERS: 'vastrika_po_v2',
+  COUPONS: 'vastrika_coupons_v2',
+  CAMPAIGNS: 'vastrika_campaigns_v2',
+  PROCESSED_WEBHOOKS: 'vastrika_processed_webhooks_v2',
+  ACTIVE_RESERVATIONS: 'vastrika_active_reservations_v2',
+  NOTIFICATIONS: 'vastrika_notifications_v2',
+  DEFECTS: 'vastrika_defects_v2',
+  APPROVALS: 'vastrika_approvals_v2',
 };
 
 class VastrikaCommerceStore {
@@ -71,6 +74,23 @@ class VastrikaCommerceStore {
 
   private loadFromStorage() {
     try {
+      // Purge legacy v1 storage if present
+      const legacyKeys = [
+        'vastrika_products_v1',
+        'vastrika_orders_v1',
+        'vastrika_movements_v1',
+        'vastrika_suppliers_v1',
+        'vastrika_po_v1',
+        'vastrika_coupons_v1',
+        'vastrika_campaigns_v1',
+        'vastrika_processed_webhooks_v1',
+        'vastrika_active_reservations_v1',
+        'vastrika_notifications_v1',
+        'vastrika_defects_v1',
+        'vastrika_approvals_v1',
+      ];
+      legacyKeys.forEach((k) => localStorage.removeItem(k));
+
       const storedProducts = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
       this.products = storedProducts ? JSON.parse(storedProducts) : [...INITIAL_PRODUCTS];
 
@@ -1595,21 +1615,75 @@ class VastrikaCommerceStore {
     }
   }
 
-  // --- RESET & DEMO DATA INITIALIZATION ---
+  // --- RESET & MANUAL TESTING CONTROLS ---
 
-  public resetToFactoryDefaults() {
-    this.products = [...INITIAL_PRODUCTS];
+  /**
+   * Resets database to a completely blank slate for manual testing:
+   * - 0 Orders
+   * - 0 Purchase Orders
+   * - 0 Pending Approvals
+   * - 0 Notifications
+   * - 0 Stock Movements
+   *
+   * mode = 'clean_slate': Restores pristine 6 sarees with initial stock, 0 transactions.
+   * mode = 'total_blank': Absolute 0 products, 0 suppliers, 0 orders.
+   */
+  public resetToBlank(mode: 'clean_slate' | 'total_blank' = 'clean_slate') {
     this.orders = [];
     this.movements = [];
-    this.suppliers = [...INITIAL_SUPPLIERS];
-    this.purchaseOrders = [...INITIAL_PURCHASE_ORDERS];
-    this.coupons = [...INITIAL_COUPONS];
-    this.campaigns = [...INITIAL_CAMPAIGNS];
-    this.notifications = [...INITIAL_NOTIFICATIONS];
-    this.defects = [...INITIAL_DEFECTS];
-    this.approvals = [...INITIAL_APPROVALS];
+    this.purchaseOrders = [];
+    this.notifications = [];
+    this.approvals = [];
     this.processedWebhookIds.clear();
+
+    if (mode === 'total_blank') {
+      this.products = [];
+      this.suppliers = [];
+      this.coupons = [];
+    } else {
+      this.products = INITIAL_PRODUCTS.map((p) => ({ ...p }));
+      this.suppliers = INITIAL_SUPPLIERS.map((s) => ({ ...s }));
+      this.coupons = INITIAL_COUPONS.map((c) => ({ ...c }));
+    }
+
     this.saveToStorage();
+    return {
+      success: true,
+      mode,
+      summary: this.getDatabaseSummary(),
+    };
+  }
+
+  /**
+   * Loads demo sample transactions (sample POs, approvals, alerts)
+   * for demonstration and walkthroughs.
+   */
+  public loadDemoData() {
+    this.products = INITIAL_PRODUCTS.map((p) => ({ ...p }));
+    this.suppliers = INITIAL_SUPPLIERS.map((s) => ({ ...s }));
+    this.purchaseOrders = DEMO_PURCHASE_ORDERS.map((po) => ({ ...po }));
+    this.notifications = DEMO_NOTIFICATIONS.map((n) => ({ ...n }));
+    this.approvals = DEMO_APPROVALS.map((a) => ({ ...a }));
+    this.coupons = INITIAL_COUPONS.map((c) => ({ ...c }));
+    this.saveToStorage();
+    return { success: true, summary: this.getDatabaseSummary() };
+  }
+
+  public getDatabaseSummary() {
+    return {
+      productsCount: this.products.length,
+      ordersCount: this.orders.length,
+      purchaseOrdersCount: this.purchaseOrders.length,
+      approvalsCount: this.approvals.length,
+      pendingApprovalsCount: this.getPendingApprovalsCount(),
+      notificationsCount: this.notifications.length,
+      movementsCount: this.movements.length,
+      suppliersCount: this.suppliers.length,
+    };
+  }
+
+  public resetToFactoryDefaults() {
+    this.resetToBlank('clean_slate');
   }
 }
 

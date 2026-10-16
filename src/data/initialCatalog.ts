@@ -539,7 +539,7 @@ export const INITIAL_CAMPAIGNS: FestivalCampaign[] = [
   },
 ];
 
-export const INITIAL_PURCHASE_ORDERS: PurchaseOrder[] = [
+export const DEMO_PURCHASE_ORDERS: PurchaseOrder[] = [
   {
     id: 'po-2026-001',
     poNumber: 'PO-KAN-2026-089',
@@ -598,7 +598,9 @@ export const INITIAL_PURCHASE_ORDERS: PurchaseOrder[] = [
   },
 ];
 
-export const INITIAL_NOTIFICATIONS: AppNotification[] = [
+export const INITIAL_PURCHASE_ORDERS: PurchaseOrder[] = [];
+
+export const DEMO_NOTIFICATIONS: AppNotification[] = [
   {
     id: 'notif-001',
     event: 'LOW_STOCK',
@@ -640,6 +642,8 @@ export const INITIAL_NOTIFICATIONS: AppNotification[] = [
   },
 ];
 
+export const INITIAL_NOTIFICATIONS: AppNotification[] = [];
+
 export const INITIAL_DEFECTS: DefectRecord[] = [
   {
     id: 'DEF-001',
@@ -679,7 +683,7 @@ export const INITIAL_DEFECTS: DefectRecord[] = [
   },
 ];
 
-export const INITIAL_APPROVALS: ApprovalRequest[] = [
+export const DEMO_APPROVALS: ApprovalRequest[] = [
   {
     id: 'appr-001',
     type: 'FINANCIAL_REFUND',
@@ -727,4 +731,6 @@ export const INITIAL_APPROVALS: ApprovalRequest[] = [
     },
   },
 ];
+
+export const INITIAL_APPROVALS: ApprovalRequest[] = [];
 

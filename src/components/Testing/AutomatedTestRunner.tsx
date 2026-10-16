@@ -803,18 +803,31 @@ export const AutomatedTestRunner: React.FC<{ onClose: () => void }> = ({ onClose
             </div>
           </div>
 
-          <button
-            onClick={runAllTests}
-            disabled={isRunning}
-            className="px-4 py-2 bg-[#5E1324] hover:bg-[#781D32] text-white text-xs font-bold rounded-lg transition shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
-          >
-            {isRunning ? (
-              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <Play className="w-3.5 h-3.5 text-amber-300" />
-            )}
-            <span>{isRunning ? 'Running All Tests...' : 'Execute All 26 Tests'}</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                commerceStore.resetToBlank('clean_slate');
+              }}
+              className="px-3 py-2 bg-stone-200 hover:bg-stone-300 text-stone-800 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 cursor-pointer"
+              title="Reset Database to Blank Slate"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-stone-700" />
+              <span>Reset DB to Blank</span>
+            </button>
+
+            <button
+              onClick={runAllTests}
+              disabled={isRunning}
+              className="px-4 py-2 bg-[#5E1324] hover:bg-[#781D32] text-white text-xs font-bold rounded-lg transition shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              {isRunning ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Play className="w-3.5 h-3.5 text-amber-300" />
+              )}
+              <span>{isRunning ? 'Running All Tests...' : `Execute All ${results.length} Tests`}</span>
+            </button>
+          </div>
         </div>
 
         {/* Results List */}

@@ -43,6 +43,10 @@ import {
   Search,
   ArrowRight,
   Send,
+  Database,
+  Trash2,
+  Sparkles,
+  Plus,
   Mail,
   MessageSquare,
 } from 'lucide-react';
@@ -126,6 +130,22 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ initialTab, 
   const [reviewNotes, setReviewNotes] = useState('');
   const [approvalFeedback, setApprovalFeedback] = useState<string | null>(null);
 
+  // Database Reset and Testing State
+  const [isDbResetMenuOpen, setIsDbResetMenuOpen] = useState(false);
+  const [dbResetToast, setDbResetToast] = useState<string | null>(null);
+
+  // Add Product Modal State
+  const [isAddProductOpen, setIsAddProductOpen] = useState(false);
+  const [newProdName, setNewProdName] = useState('');
+  const [newProdSku, setNewProdSku] = useState('');
+  const [newProdCategory, setNewProdCategory] = useState('Kanjeevaram Silk');
+  const [newProdPrice, setNewProdPrice] = useState(14999);
+  const [newProdCost, setNewProdCost] = useState(8500);
+  const [newProdQty, setNewProdQty] = useState(10);
+  const [newProdFabric, setNewProdFabric] = useState('100% Pure Mulberry Silk');
+  const [newProdZari, setNewProdZari] = useState('Gold Zari');
+  const [newProdDesc, setNewProdDesc] = useState('Authentic handwoven silk saree with zari borders.');
+
   const refreshData = () => {
     setProducts(commerceStore.getProducts());
     setMovements(commerceStore.getInventoryMovements());
@@ -134,6 +154,61 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ initialTab, 
     setOrders(commerceStore.getOrders());
     setNotifications(commerceStore.getNotifications());
     setApprovals(commerceStore.getApprovals());
+  };
+
+  const handleResetDb = (mode: 'clean_slate' | 'total_blank' | 'demo') => {
+    if (mode === 'demo') {
+      commerceStore.loadDemoData();
+      setDbResetToast('Sample demo dataset loaded.');
+    } else {
+      commerceStore.resetToBlank(mode);
+      setDbResetToast(
+        mode === 'clean_slate'
+          ? 'DB reset to Blank Slate: 0 orders, 0 POs, 0 approvals. Ready for manual test.'
+          : 'Total DB wiped: 0 products, 0 orders, 0 suppliers.'
+      );
+    }
+    setIsDbResetMenuOpen(false);
+    refreshData();
+    setTimeout(() => setDbResetToast(null), 4000);
+  };
+
+  const handleCreateNewProduct = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newProdName || !newProdSku) return;
+
+    commerceStore.createProduct({
+      name: newProdName,
+      slug: newProdName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+      sku: newProdSku.toUpperCase(),
+      category: newProdCategory,
+      sellingPricePaise: Math.round(Number(newProdPrice) * 100),
+      costPricePaise: Math.round(Number(newProdCost) * 100),
+      mrpPaise: Math.round(Number(newProdPrice) * 1.25 * 100),
+      discountPercent: 20,
+      taxRatePercent: 5,
+      availableQty: Number(newProdQty),
+      reservedQty: 0,
+      lowStockThreshold: 3,
+      collections: ['all', 'new-arrivals', 'working-women'],
+      images: [
+        'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=1000&q=80',
+      ],
+      description: newProdDesc,
+      fabric: newProdFabric,
+      color: 'Crimson Maroon & Gold',
+      blousePiece: 'Included (Unstitched 0.8m)',
+      lengthMeters: 6.3,
+      careInstructions: 'Strictly dry clean only to protect delicate zari weave.',
+      supplierId: 'sup-001',
+      supplierName: 'Kanchipuram Heritage Guild',
+      status: 'ACTIVE',
+    });
+
+    setIsAddProductOpen(false);
+    setNewProdName('');
+    setNewProdSku('');
+    refreshData();
   };
 
   useEffect(() => {
@@ -305,13 +380,68 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ initialTab, 
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 text-stone-400 hover:text-white rounded-lg hover:bg-stone-700 transition cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Database Reset Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setIsDbResetMenuOpen(!isDbResetMenuOpen)}
+                className="flex items-center gap-1.5 px-2.5 py-1 bg-stone-800 hover:bg-stone-700 text-amber-300 border border-stone-600 rounded-lg text-xs font-semibold cursor-pointer transition"
+                title="Testing DB Reset"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+                <span>Reset DB</span>
+              </button>
+
+              {isDbResetMenuOpen && (
+                <div className="absolute right-0 mt-2 w-64 bg-stone-900 border border-stone-700 rounded-xl shadow-2xl p-2 z-50 text-xs space-y-1">
+                  <div className="px-2 py-1 text-[10px] text-stone-400 font-mono uppercase tracking-wider border-b border-stone-800">
+                    Database Testing Controls
+                  </div>
+                  <button
+                    onClick={() => handleResetDb('clean_slate')}
+                    className="w-full text-left px-2 py-2 hover:bg-stone-800 rounded-lg text-stone-200 transition cursor-pointer"
+                  >
+                    <div className="font-bold text-amber-300">Blank Slate (Manual Testing)</div>
+                    <div className="text-[10px] text-stone-400">0 orders, 0 POs, 0 approvals; fresh catalog.</div>
+                  </button>
+                  <button
+                    onClick={() => handleResetDb('total_blank')}
+                    className="w-full text-left px-2 py-2 hover:bg-stone-800 rounded-lg text-rose-300 transition cursor-pointer"
+                  >
+                    <div className="font-bold text-rose-400">Total Blank (0 Products)</div>
+                    <div className="text-[10px] text-stone-400">Wipes all catalog items and suppliers.</div>
+                  </button>
+                  <button
+                    onClick={() => handleResetDb('demo')}
+                    className="w-full text-left px-2 py-2 hover:bg-stone-800 rounded-lg text-blue-300 transition cursor-pointer"
+                  >
+                    <div className="font-bold text-blue-400">Load Demo Sample Data</div>
+                    <div className="text-[10px] text-stone-400">Restores sample POs and alerts.</div>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={onClose}
+              className="p-1.5 text-stone-400 hover:text-white rounded-lg hover:bg-stone-700 transition cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
+
+        {dbResetToast && (
+          <div className="bg-emerald-900/90 text-emerald-200 px-6 py-2 text-xs flex items-center justify-between border-b border-emerald-700">
+            <span className="font-medium flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              {dbResetToast}
+            </span>
+            <button onClick={() => setDbResetToast(null)} className="text-emerald-400 hover:text-white cursor-pointer">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
         {/* Tab Navigation */}
         <div className="bg-stone-100 px-6 py-2 border-b border-stone-200 flex items-center gap-1.5 overflow-x-auto text-xs">
@@ -1287,14 +1417,66 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ initialTab, 
           {/* TAB 7: Stock Levels & Valuation */}
           {activeTab === 'PRODUCTS' && (
             <div className="space-y-4">
-              <div className="border border-stone-200 rounded-xl overflow-hidden text-xs">
-                <div className="bg-stone-100 px-4 py-2.5 border-b border-stone-200 grid grid-cols-12 text-[11px] font-bold text-stone-600 uppercase font-mono">
-                  <span className="col-span-4">Saree & SKU</span>
-                  <span className="col-span-2">Weave Category</span>
-                  <span className="col-span-2 text-right">Available Qty</span>
-                  <span className="col-span-2 text-right">Selling Price</span>
-                  <span className="col-span-2 text-center">Action</span>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-serif text-sm font-bold text-stone-900">
+                    Live Saree Inventory ({products.length} Products)
+                  </h3>
+                  <p className="text-[11px] text-stone-500">
+                    Real-time available stock, selling prices, and damage adjustments
+                  </p>
                 </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setIsAddProductOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#5E1324] hover:bg-[#781D32] text-white rounded-lg text-xs font-semibold cursor-pointer transition shadow-xs"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add New Saree</span>
+                  </button>
+                  {products.length === 0 && (
+                    <button
+                      onClick={() => handleResetDb('clean_slate')}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-300 rounded-lg text-xs font-semibold cursor-pointer transition"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 text-[#C5A059]" />
+                      <span>Restore Catalog (6 Sarees)</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {products.length === 0 ? (
+                <div className="p-12 text-center border-2 border-dashed border-stone-200 rounded-2xl space-y-3 bg-stone-50/50">
+                  <Boxes className="w-10 h-10 text-stone-400 mx-auto" />
+                  <h4 className="font-serif text-base font-bold text-stone-800">Catalog is Empty (Blank State)</h4>
+                  <p className="text-xs text-stone-500 max-w-sm mx-auto">
+                    The database is currently 100% blank. You can add a new saree manually or restore the pristine catalog of 6 handwoven sarees.
+                  </p>
+                  <div className="flex items-center justify-center gap-3 pt-2">
+                    <button
+                      onClick={() => setIsAddProductOpen(true)}
+                      className="px-4 py-2 bg-[#5E1324] text-white rounded-xl text-xs font-bold hover:bg-[#781D32] transition cursor-pointer"
+                    >
+                      + Add Custom Saree
+                    </button>
+                    <button
+                      onClick={() => handleResetDb('clean_slate')}
+                      className="px-4 py-2 bg-stone-200 text-stone-800 rounded-xl text-xs font-bold hover:bg-stone-300 transition cursor-pointer"
+                    >
+                      Restore 6 Sarees
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="border border-stone-200 rounded-xl overflow-hidden text-xs">
+                  <div className="bg-stone-100 px-4 py-2.5 border-b border-stone-200 grid grid-cols-12 text-[11px] font-bold text-stone-600 uppercase font-mono">
+                    <span className="col-span-4">Saree & SKU</span>
+                    <span className="col-span-2">Weave Category</span>
+                    <span className="col-span-2 text-right">Available Qty</span>
+                    <span className="col-span-2 text-right">Selling Price</span>
+                    <span className="col-span-2 text-center">Action</span>
+                  </div>
 
                 <div className="divide-y divide-stone-100">
                   {products.map((p) => (
@@ -1334,6 +1516,7 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ initialTab, 
                   ))}
                 </div>
               </div>
+            )}
 
               {/* Selected Product Stock Adjustment / Damage Write-Off Modal */}
               {selectedProduct && (
@@ -1391,6 +1574,145 @@ export const InventoryManager: React.FC<InventoryManagerProps> = ({ initialTab, 
                         className="w-full py-2 bg-rose-700 hover:bg-rose-800 text-white font-bold rounded transition cursor-pointer"
                       >
                         Write Off & Log in Audit Trail
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              )}
+
+              {/* Add New Saree Modal */}
+              {isAddProductOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+                  <div className="bg-white p-6 rounded-2xl max-w-lg w-full space-y-4 shadow-2xl border border-stone-200 text-xs">
+                    <div className="flex items-center justify-between border-b pb-2">
+                      <div className="flex items-center gap-2">
+                        <Plus className="w-4 h-4 text-[#5E1324]" />
+                        <h4 className="font-serif text-sm font-bold text-stone-900">
+                          Add New Saree to Live Catalog
+                        </h4>
+                      </div>
+                      <button onClick={() => setIsAddProductOpen(false)} className="cursor-pointer">
+                        <X className="w-4 h-4 text-stone-500" />
+                      </button>
+                    </div>
+
+                    <form onSubmit={handleCreateNewProduct} className="space-y-3">
+                      <div>
+                        <label className="block text-stone-700 font-medium mb-1">Saree Name *</label>
+                        <input
+                          type="text"
+                          required
+                          value={newProdName}
+                          onChange={(e) => setNewProdName(e.target.value)}
+                          placeholder="e.g. Maharani Pure Kanjivaram Zari Silk Saree"
+                          className="w-full px-3 py-1.5 border border-stone-300 rounded-lg text-xs"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-stone-700 font-medium mb-1">SKU Code *</label>
+                          <input
+                            type="text"
+                            required
+                            value={newProdSku}
+                            onChange={(e) => setNewProdSku(e.target.value)}
+                            placeholder="VAS-KAN-003"
+                            className="w-full px-3 py-1.5 border border-stone-300 rounded-lg font-mono text-xs uppercase"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-stone-700 font-medium mb-1">Weave / Category *</label>
+                          <select
+                            value={newProdCategory}
+                            onChange={(e) => setNewProdCategory(e.target.value)}
+                            className="w-full px-3 py-1.5 border border-stone-300 rounded-lg text-xs"
+                          >
+                            <option value="Kanjeevaram Silk">Kanjeevaram Silk</option>
+                            <option value="Banarasi Silk">Banarasi Silk</option>
+                            <option value="Chanderi">Chanderi</option>
+                            <option value="Mysore Silk">Mysore Silk</option>
+                            <option value="Tussar Silk">Tussar Silk</option>
+                            <option value="Linen">Linen</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-stone-700 font-medium mb-1">Selling Price (₹) *</label>
+                          <input
+                            type="number"
+                            min={100}
+                            required
+                            value={newProdPrice}
+                            onChange={(e) => setNewProdPrice(Number(e.target.value))}
+                            className="w-full px-3 py-1.5 border border-stone-300 rounded-lg font-mono text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-stone-700 font-medium mb-1">Supplier Cost (₹)</label>
+                          <input
+                            type="number"
+                            min={0}
+                            value={newProdCost}
+                            onChange={(e) => setNewProdCost(Number(e.target.value))}
+                            className="w-full px-3 py-1.5 border border-stone-300 rounded-lg font-mono text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-stone-700 font-medium mb-1">Initial Stock (Pcs) *</label>
+                          <input
+                            type="number"
+                            min={0}
+                            required
+                            value={newProdQty}
+                            onChange={(e) => setNewProdQty(Number(e.target.value))}
+                            className="w-full px-3 py-1.5 border border-stone-300 rounded-lg font-mono text-xs"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-stone-700 font-medium mb-1">Fabric Details</label>
+                          <input
+                            type="text"
+                            value={newProdFabric}
+                            onChange={(e) => setNewProdFabric(e.target.value)}
+                            className="w-full px-3 py-1.5 border border-stone-300 rounded-lg text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-stone-700 font-medium mb-1">Zari Type</label>
+                          <input
+                            type="text"
+                            value={newProdZari}
+                            onChange={(e) => setNewProdZari(e.target.value)}
+                            className="w-full px-3 py-1.5 border border-stone-300 rounded-lg text-xs"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-stone-700 font-medium mb-1">Description</label>
+                        <textarea
+                          rows={2}
+                          value={newProdDesc}
+                          onChange={(e) => setNewProdDesc(e.target.value)}
+                          className="w-full px-3 py-1.5 border border-stone-300 rounded-lg text-xs"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="w-full py-2.5 bg-[#5E1324] hover:bg-[#781D32] text-white font-bold rounded-xl transition cursor-pointer text-xs"
+                      >
+                        Create Saree & Add to Live Inventory
                       </button>
                     </form>
                   </div>
