@@ -1,0 +1,102 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Global Safety Net: Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Global Security Primitives
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Sovereign root administrator based on user runtime email
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'ashish.4u89@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // 3. Products Collection
+    // Public read so shoppers can browse sarees; write restricted to administrators
+    match /products/{productId} {
+      allow get, list: if true;
+
+      allow create, update, delete: if isAdmin() && isValidId(productId);
+    }
+
+    // 4. Orders Collection
+    // Customers can read their own orders; admins can manage all
+    match /orders/{orderId} {
+      allow get: if isValidId(orderId) && (
+        isAdmin() ||
+        (isSignedIn() && existing().customerId == request.auth.uid)
+      );
+
+      allow list: if isAdmin() || (
+        isSignedIn() && resource.data.customerId == request.auth.uid
+      );
+
+      allow create: if isValidId(orderId) && (
+        incoming().orderNumber is string &&
+        incoming().totalPaise is number &&
+        incoming().totalPaise >= 0
+      );
+
+      allow update: if isValidId(orderId) && (
+        isAdmin() ||
+        (isSignedIn() && existing().customerId == request.auth.uid &&
+         incoming().diff(existing()).affectedKeys().hasOnly(['shippingAddress', 'notes']))
+      );
+
+      allow delete: if false; // Invoices are immutable
+    }
+
+    // 5. Inventory Movements Audit Trail (Append-only, immutable)
+    match /inventoryMovements/{movementId} {
+      allow read: if isAdmin();
+
+      allow create: if isValidId(movementId) && isAdmin() && (
+        incoming().sku is string &&
+        incoming().quantityDelta is number
+      );
+
+      allow update, delete: if false; // Strict tamper-proof audit trail
+    }
+
+    // 6. User Profiles & Role Metadata
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (
+        isAdmin() || (isSignedIn() && request.auth.uid == userId)
+      );
+
+      allow list: if isAdmin();
+
+      allow create, update: if isValidId(userId) && (
+        isAdmin() || (
+          isSignedIn() &&
+          request.auth.uid == userId &&
+          (!incoming().keys().hasAny(['role']) || incoming().role == existing().role)
+        )
+      );
+
+      allow delete: if isAdmin();
+    }
+  }
+}

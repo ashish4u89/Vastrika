@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+.font-serif {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.font-sans {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Custom smooth transitions and print styles for POS invoices */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-pos-receipt, #printable-pos-receipt * {
+    visibility: visible;
+  }
+  #printable-pos-receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Indian saree product in catalog with pricing and stock",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "sku": { "type": "string", "maxLength": 64 },
+        "name": { "type": "string", "maxLength": 200 },
+        "slug": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "category": { "type": "string", "maxLength": 100 },
+        "fabric": { "type": "string", "maxLength": 100 },
+        "color": { "type": "string", "maxLength": 100 },
+        "costPricePaise": { "type": "number" },
+        "sellingPricePaise": { "type": "number" },
+        "availableQty": { "type": "number" },
+        "status": { "type": "string", "enum": ["ACTIVE", "ARCHIVED", "OUT_OF_STOCK"] }
+      },
+      "required": ["id", "sku", "name", "category", "sellingPricePaise", "availableQty", "status"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer online order or retail store POS bill",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "orderNumber": { "type": "string", "maxLength": 64 },
+        "source": { "type": "string", "enum": ["ONLINE_STORE", "RETAIL_POS"] },
+        "customerName": { "type": "string", "maxLength": 150 },
+        "customerPhone": { "type": "string", "maxLength": 20 },
+        "subtotalPaise": { "type": "number" },
+        "taxPaise": { "type": "number" },
+        "totalPaise": { "type": "number" },
+        "paymentMethod": { "type": "string", "enum": ["RAZORPAY", "CASH", "UPI", "CARD", "BANK_TRANSFER"] },
+        "paymentStatus": { "type": "string", "enum": ["PENDING", "AUTHORIZED", "PAID", "FAILED", "REFUNDED"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "orderNumber", "source", "customerName", "totalPaise", "paymentMethod", "paymentStatus"]
+    },
+    "InventoryMovement": {
+      "title": "InventoryMovement",
+      "description": "Tamper-proof audit record of stock additions and deductions",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "productId": { "type": "string", "maxLength": 128 },
+        "productName": { "type": "string", "maxLength": 200 },
+        "sku": { "type": "string", "maxLength": 64 },
+        "type": { "type": "string", "enum": ["PURCHASE_RECEIPT", "ONLINE_SALE", "POS_SALE", "CUSTOMER_RETURN", "SUPPLIER_RETURN", "DAMAGE_WRITE_OFF", "AUDIT_ADJUSTMENT"] },
+        "quantityDelta": { "type": "number" },
+        "referenceId": { "type": "string", "maxLength": 100 },
+        "performedBy": { "type": "string", "maxLength": 100 },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "productId", "sku", "type", "quantityDelta", "referenceId", "performedBy"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile with role attribute and contact information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 150 },
+        "displayName": { "type": "string", "maxLength": 150 },
+        "role": { "type": "string", "enum": ["OWNER_ADMIN", "STORE_MANAGER", "BILLING_OPERATOR", "INVENTORY_OPERATOR", "CUSTOMER"] }
+      },
+      "required": ["id", "email", "role"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Saree catalogue documents. Public read, write restricted to authorized staff."
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Online customer and in-store orders. Read restricted to customer owner or staff."
+    },
+    "/inventoryMovements/{movementId}": {
+      "schema": { "$ref": "#/entities/InventoryMovement" },
+      "description": "Audit trail movements. Append only by staff, immutable once written."
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profile and role metadata. Protected from self-escalation."
+    }
+  }
+}

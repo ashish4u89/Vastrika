@@ -1,0 +1,6 @@
+{
+  "name": "Vastrika — Elegance for Every You",
+  "description": "Premium Indian saree commerce platform, mobile shopping PWA, and physical store retail management system.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
